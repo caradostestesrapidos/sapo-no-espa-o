@@ -147,7 +147,7 @@ details[open]>summary{margin-bottom:10px}
 
 <script type="module">
 import {initializeApp} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import {getFirestore,doc,onSnapshot,setDoc} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import {getDatabase,ref as mkRef,onValue,set,update} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBz9xFvDNaSIg6tUdsEkRutPLy9bqAYbe8",
@@ -155,9 +155,11 @@ const firebaseConfig = {
   projectId: "sapo-no-espaco",
   storageBucket: "sapo-no-espaco.firebasestorage.app",
   messagingSenderId: "750908625220",
-  appId: "1:750908625220:web:cadd12441d7da409eb4711"
+  appId: "1:750908625220:web:cadd12441d7da409eb4711",
+  // Confira esta URL em Firebase > Realtime Database > Dados (topo da tela) e ajuste se for diferente:
+  databaseURL: "https://sapo-no-espaco-default-rtdb.firebaseio.com"
 };
-const ref = doc(getFirestore(initializeApp(firebaseConfig)), "missoes", "lumos");
+const ref = mkRef(getDatabase(initializeApp(firebaseConfig)), "missoes/lumos");
 const EMPTY = {passcode:"123456",title:"",subtitle:"",stages:[],currentStage:0,suit:{name:"",desc:"",img:""},target:0,playlist:[],currentTrack:-1,telemetry:{battery:null,temp:"",status:""}};
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -166,21 +168,23 @@ const none = t => `<p class="empty">${t}</p>`;
 let D = {...EMPTY}, ready = false, role = null, pendImg = null;
 
 const save = async (patch, msg = "Salvo") => {
-  try { await setDoc(ref, patch, {merge:true}); toast(msg); }
+  try { await update(ref, patch); toast(msg); }
   catch (e) { toast("Erro ao salvar: " + e.code); }
 };
 function toast(t){const e=$("toast");e.textContent=t;e.style.display="block";clearTimeout(toast.t);toast.t=setTimeout(()=>e.style.display="none",2200)}
 
-onSnapshot(ref, s => {
-  if (!s.exists()) { setDoc(ref, EMPTY); return; }
-  const d = s.data();
-  if (!d.passcode) { setDoc(ref, {passcode:"123456"}, {merge:true}); return; }
+const gs = t => $("gateSt").textContent = t;
+setTimeout(() => { if (!ready) gs("Ainda sem resposta do servidor. Confira a databaseURL no início do script (copie do console, em Realtime Database > Dados) e abra o arquivo hospedado, não a prévia do chat."); }, 8000);
+onValue(ref, s => {
+  if (!s.exists()) { set(ref, EMPTY).catch(e => gs("Erro ao criar os dados: " + e.code)); return; }
+  const d = s.val();
+  if (!d.passcode) { update(ref, {passcode:"123456"}); return; }
   D = {...EMPTY, ...d, suit:{...EMPTY.suit, ...d.suit}, telemetry:{...EMPTY.telemetry, ...d.telemetry}};
   ready = true;
   $("dot").className = "dot ok"; $("syncTx").textContent = "Sync ao vivo";
   $("gateSt").textContent = "Conectado ao Firebase.";
   render();
-}, () => { $("dot").className = "dot"; $("syncTx").textContent = "Offline"; $("gateSt").textContent = "Sem conexão com o Firebase."; });
+}, e => { $("dot").className = "dot"; $("syncTx").textContent = "Offline"; gs("Erro do Firebase: " + e.code + (e.code === "PERMISSION_DENIED" || e.code === "permission-denied" ? " (confira as regras do Realtime Database)" : "")); });
 
 /* ---------- Acesso ---------- */
 const enter = r => { role = r; $("gate").style.display = "none"; $("roleTx").textContent = r === "cmd" ? "Comandante" : "Visitante"; $("cmd").style.display = r === "cmd" ? "grid" : "none"; render(true); };
