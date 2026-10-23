@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sapo No Espaço</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+:root{--g:#00ffcc;--c:#4fd8ff;--y:#ffd23f;--bg:#02030a;--p:#0a1424;--l:#16314d;--r:#ff5a5a}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:#cfeee6;font-family:"Courier New",ui-monospace,monospace;min-height:100vh}
+body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:90;background:repeating-linear-gradient(0deg,rgba(0,0,0,.18) 0 1px,transparent 1px 3px)}
+#stars{position:fixed;inset:0;z-index:-1}
+.panel{background:linear-gradient(180deg,#0d1b30,var(--p));border:2px solid var(--l);border-top-color:#3b6a96;border-left-color:#3b6a96;border-radius:4px;padding:14px;box-shadow:0 0 18px rgba(0,255,204,.07)}
+.panel>h2{margin:-14px -14px 12px;padding:5px 12px;background:linear-gradient(180deg,#2a4e75,#17304a);color:var(--y);font-size:13px;letter-spacing:.12em;text-transform:uppercase;border-bottom:2px solid #0a1424}
+.neon{color:var(--g);text-shadow:0 0 8px rgba(0,255,204,.7)}
+.mut{color:#6d8fa5;font-size:13px}
+.cd{font-size:clamp(28px,8vw,56px);color:var(--g);text-shadow:0 0 12px var(--g);letter-spacing:.06em;text-align:center}
+.cd small{display:block;font-size:12px;color:var(--c);letter-spacing:.2em}
+.bar{height:16px;background:#050c17;border:2px solid var(--l);border-radius:2px;overflow:hidden}
+.bar i{display:block;height:100%;background:repeating-linear-gradient(90deg,var(--g) 0 8px,#00b894 8px 10px);transition:width .6s}
+.st{display:flex;gap:10px;padding:8px;border-left:4px solid var(--l);margin-top:8px;background:#07111f}
+.st.done{border-color:var(--g)}.st.now{border-color:var(--y);background:#1b1a0a}.st.wait{opacity:.6}
+.tag{font-size:11px;padding:1px 6px;border:1px solid currentColor;white-space:nowrap;height:fit-content}
+.done .tag{color:var(--g)}.now .tag{color:var(--y);animation:bl 1s steps(2) infinite}.wait .tag{color:#6d8fa5}
+@keyframes bl{50%{opacity:.3}}
+input,textarea,select{width:100%;background:#050c17;border:1px solid #2c5278;color:var(--g);padding:8px;font:inherit;font-size:14px;border-radius:2px}
+input:focus,textarea:focus,select:focus,button:focus-visible,summary:focus-visible{outline:2px solid var(--c);outline-offset:1px}
+label{display:block;font-size:12px;color:var(--c);margin:8px 0 3px}
+.btn{background:linear-gradient(180deg,#3b6a96,#1d3b58);color:#fff;border:2px outset #6a9cc8;padding:8px 14px;font:inherit;font-size:13px;cursor:pointer;border-radius:2px;margin:6px 6px 0 0;display:inline-block;text-decoration:none}
+.btn:active{border-style:inset}.btn.g{background:linear-gradient(180deg,#00c9a0,#00785f);color:#001a14}.btn.r{background:linear-gradient(180deg,#b33,#722)}
+details.panel>summary{cursor:pointer;color:var(--y);font-size:13px;letter-spacing:.1em;text-transform:uppercase}
+details[open]>summary{margin-bottom:10px}
+.trk{display:flex;align-items:center;gap:6px;padding:6px;border-bottom:1px dashed #1f3d5c}
+.trk.on{color:var(--g)}
+#gate{position:fixed;inset:0;z-index:80;background:rgba(2,3,10,.93);display:flex;align-items:center;justify-content:center;padding:16px}
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--r);margin-right:6px}
+.dot.ok{background:var(--g);box-shadow:0 0 8px var(--g)}
+#toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:var(--g);color:#001a14;padding:8px 16px;z-index:95;display:none;font-size:13px}
+.empty{color:#4a6a80;font-style:italic;font-size:13px}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<canvas id="stars"></canvas>
+
+<div id="gate">
+  <div class="panel" style="max-width:420px;width:100%;text-align:center">
+    <h2>Acesso ao portal</h2>
+    <svg width="72" height="72" viewBox="0 0 72 72" aria-hidden="true"><circle cx="36" cy="38" r="30" fill="#0a1424" stroke="#4fd8ff" stroke-width="3"/><ellipse cx="36" cy="42" rx="20" ry="16" fill="#3ddc84"/><circle cx="26" cy="30" r="8" fill="#3ddc84"/><circle cx="46" cy="30" r="8" fill="#3ddc84"/><circle cx="26" cy="30" r="4" fill="#fff"/><circle cx="46" cy="30" r="4" fill="#fff"/><circle cx="27" cy="30" r="2" fill="#000"/><circle cx="47" cy="30" r="2" fill="#000"/><path d="M24 46q12 8 24 0" stroke="#064" stroke-width="2.5" fill="none"/></svg>
+    <h1 class="neon" style="font-size:24px;margin:4px 0">SAPO NO ESPAÇO</h1>
+    <p class="mut">Missões Lumos</p>
+    <div id="gateBtns">
+      <button class="btn g" id="bCmd">Entrar como Comandante</button>
+      <button class="btn" id="bVis">Entrar como Visitante</button>
+    </div>
+    <div id="gateCode" style="display:none">
+      <label for="code">Senha de 6 dígitos</label>
+      <input id="code" type="password" inputmode="numeric" maxlength="6" autocomplete="off" style="text-align:center;font-size:22px;letter-spacing:.4em">
+      <p id="gateErr" style="color:var(--r);font-size:13px;min-height:18px"></p>
+      <button class="btn g" id="bOk">Entrar</button>
+      <button class="btn" id="bBack">Voltar</button>
+    </div>
+    <p class="mut" id="gateSt" style="margin-top:12px">Conectando ao Firebase…</p>
+  </div>
+</div>
+
+<div class="max-w-5xl mx-auto p-3 md:p-5">
+  <header class="panel mb-4 flex flex-wrap items-center justify-between gap-3">
+    <div class="flex items-center gap-3">
+      <svg width="44" height="44" viewBox="0 0 72 72" aria-hidden="true"><circle cx="36" cy="38" r="30" fill="#0a1424" stroke="#4fd8ff" stroke-width="3"/><ellipse cx="36" cy="42" rx="20" ry="16" fill="#3ddc84"/><circle cx="26" cy="30" r="8" fill="#3ddc84"/><circle cx="46" cy="30" r="8" fill="#3ddc84"/><circle cx="26" cy="30" r="4" fill="#fff"/><circle cx="46" cy="30" r="4" fill="#fff"/></svg>
+      <div><div class="neon" style="font-size:20px;font-weight:bold">SAPO NO ESPAÇO</div><div class="mut">Controle das Missões Lumos</div></div>
+    </div>
+    <div class="text-right" style="font-size:13px">
+      <div><span class="dot" id="dot"></span><span id="syncTx">Offline</span> · <span id="roleTx" style="color:var(--y)"></span></div>
+      <div>Recife <b class="neon" id="clkR">--:--:--</b> · UTC <b style="color:var(--c)" id="clkU">--:--:--</b></div>
+      <button class="btn" id="bExit" style="margin:4px 0 0">Sair</button>
+    </div>
+  </header>
+
+  <main class="grid gap-4 md:grid-cols-2">
+    <section class="panel md:col-span-2" aria-live="polite">
+      <h2>Missão atual</h2>
+      <div id="vMission"></div>
+      <div class="cd" id="vCd" style="margin-top:12px"></div>
+    </section>
+
+    <section class="panel"><h2>Estágios da missão</h2><div id="vStages"></div></section>
+
+    <section class="panel"><h2>Traje &amp; telemetria</h2><div id="vSuit"></div></section>
+
+    <section class="panel md:col-span-2"><h2>Player &amp; playlist</h2><div id="vPlayer"></div></section>
+
+    <div id="cmd" class="md:col-span-2 grid gap-4" style="display:none">
+      <h2 class="neon" style="margin:6px 0 0;font-size:18px">▌CENTRO DE COMANDO</h2>
+
+      <details class="panel" open><summary>1 · Título da missão</summary>
+        <label for="fT">Título</label><input id="fT" maxlength="80">
+        <label for="fS">Subtítulo / descrição</label><textarea id="fS" rows="3"></textarea>
+        <button class="btn g" id="sMission">Salvar missão</button>
+      </details>
+
+      <details class="panel"><summary>2 · Estágios (até 6)</summary>
+        <div id="fStages"></div>
+        <button class="btn g" id="sStages">Salvar estágios</button>
+        <label for="fCur">Estágio atual</label><select id="fCur"></select>
+        <button class="btn" id="bPrev">Voltar estágio</button>
+        <button class="btn g" id="bNext">Avançar estágio</button>
+      </details>
+
+      <details class="panel"><summary>3 · Traje operacional</summary>
+        <label for="fSn">Nome do traje</label><input id="fSn" maxlength="80">
+        <label for="fSd">Descrição</label><textarea id="fSd" rows="2"></textarea>
+        <label for="fSu">Link (URL) da foto</label><input id="fSu" placeholder="https://…">
+        <label for="fSf">…ou enviar imagem do aparelho</label><input id="fSf" type="file" accept="image/*">
+        <img id="fSp" alt="" style="max-height:120px;margin-top:8px;display:none">
+        <div><button class="btn g" id="sSuit">Salvar traje</button><button class="btn r" id="cSuit">Remover foto</button></div>
+      </details>
+
+      <details class="panel"><summary>4 · Data e hora alvo</summary>
+        <label for="fD">Contagem regressiva até</label><input id="fD" type="datetime-local">
+        <button class="btn g" id="sDate">Salvar data</button><button class="btn r" id="cDate">Limpar</button>
+      </details>
+
+      <details class="panel"><summary>5 · Playlist</summary>
+        <label for="fMt">Nome da música</label><input id="fMt" maxlength="80">
+        <label for="fMl">Link direto (WhatsApp/Zap, áudio ou outro)</label><input id="fMl" placeholder="https://…">
+        <button class="btn g" id="sMusic">Adicionar à playlist</button>
+        <div id="fList" style="margin-top:8px"></div>
+      </details>
+
+      <details class="panel"><summary>6 · Telemetria</summary>
+        <label for="fB">Bateria do Samsung A05s (0–100%)</label><input id="fB" type="number" min="0" max="100">
+        <label for="fTe">Temperatura do ambiente</label><input id="fTe" maxlength="20" placeholder="ex.: 28 °C">
+        <label for="fSt">Status de conexão</label><input id="fSt" maxlength="40">
+        <button class="btn g" id="sTele">Salvar telemetria</button>
+      </details>
+
+      <details class="panel"><summary>7 · Senha do Comandante</summary>
+        <label for="fP">Nova senha (6 dígitos)</label><input id="fP" inputmode="numeric" maxlength="6">
+        <button class="btn g" id="sPass">Atualizar senha</button>
+      </details>
+    </div>
+  </main>
+</div>
+<div id="toast" role="status"></div>
+
+<script type="module">
+import {initializeApp} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {getFirestore,doc,onSnapshot,setDoc} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBz9xFvDNaSIg6tUdsEkRutPLy9bqAYbe8",
+  authDomain: "sapo-no-espaco.firebaseapp.com",
+  projectId: "sapo-no-espaco",
+  storageBucket: "sapo-no-espaco.firebasestorage.app",
+  messagingSenderId: "750908625220",
+  appId: "1:750908625220:web:cadd12441d7da409eb4711"
+};
+const ref = doc(getFirestore(initializeApp(firebaseConfig)), "missoes", "lumos");
+const EMPTY = {passcode:"123456",title:"",subtitle:"",stages:[],currentStage:0,suit:{name:"",desc:"",img:""},target:0,playlist:[],currentTrack:-1,telemetry:{battery:null,temp:"",status:""}};
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const okUrl = u => /^(https?:|data:image\/)/i.test(u || "");
+const none = t => `<p class="empty">${t}</p>`;
+let D = {...EMPTY}, ready = false, role = null, pendImg = null;
+
+const save = async (patch, msg = "Salvo") => {
+  try { await setDoc(ref, patch, {merge:true}); toast(msg); }
+  catch (e) { toast("Erro ao salvar: " + e.code); }
+};
+function toast(t){const e=$("toast");e.textContent=t;e.style.display="block";clearTimeout(toast.t);toast.t=setTimeout(()=>e.style.display="none",2200)}
+
+onSnapshot(ref, s => {
+  if (!s.exists()) { setDoc(ref, EMPTY); return; }
+  const d = s.data();
+  if (!d.passcode) { setDoc(ref, {passcode:"123456"}, {merge:true}); return; }
+  D = {...EMPTY, ...d, suit:{...EMPTY.suit, ...d.suit}, telemetry:{...EMPTY.telemetry, ...d.telemetry}};
+  ready = true;
+  $("dot").className = "dot ok"; $("syncTx").textContent = "Sync ao vivo";
+  $("gateSt").textContent = "Conectado ao Firebase.";
+  render();
+}, () => { $("dot").className = "dot"; $("syncTx").textContent = "Offline"; $("gateSt").textContent = "Sem conexão com o Firebase."; });
+
+/* ---------- Acesso ---------- */
+const enter = r => { role = r; $("gate").style.display = "none"; $("roleTx").textContent = r === "cmd" ? "Comandante" : "Visitante"; $("cmd").style.display = r === "cmd" ? "grid" : "none"; render(true); };
+$("bVis").onclick = () => enter("vis");
+$("bCmd").onclick = () => { $("gateBtns").style.display = "none"; $("gateCode").style.display = "block"; $("code").focus(); };
+$("bBack").onclick = () => { $("gateBtns").style.display = ""; $("gateCode").style.display = "none"; $("gateErr").textContent = ""; $("code").value = ""; };
+const tryCode = () => {
+  if (!ready) { $("gateErr").textContent = "Aguarde a conexão com o Firebase."; return; }
+  if ($("code").value === String(D.passcode)) { $("code").value = ""; enter("cmd"); }
+  else $("gateErr").textContent = "Senha incorreta. Digite os 6 dígitos.";
+};
+$("bOk").onclick = tryCode;
+$("code").onkeydown = e => { if (e.key === "Enter") tryCode(); };
+$("bExit").onclick = () => { role = null; $("cmd").style.display = "none"; $("gate").style.display = "flex"; $("bBack").click(); };
+
+/* ---------- Visão pública ---------- */
+const stg = () => D.stages.filter(s => s && (s.name || s.desc));
+function render(force) {
+  $("vMission").innerHTML = (D.title || D.subtitle)
+    ? `<h3 class="neon" style="font-size:22px;margin:0">${esc(D.title)}</h3><p style="margin:6px 0 0">${esc(D.subtitle)}</p>`
+    : none("Aguardando o Comandante definir a missão.");
+  const S = stg(), cur = Math.min(D.currentStage || 0, S.length), pct = S.length ? Math.round(cur / S.length * 100) : 0;
+  $("vStages").innerHTML = S.length
+    ? `<div class="bar" role="progressbar" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100"><i style="width:${pct}%"></i></div><div class="mut" style="margin-top:4px">${pct}% concluído</div>` +
+      S.map((s, i) => { const k = i < cur ? "done" : i === cur ? "now" : "wait", t = {done:"Concluído",now:"Em andamento",wait:"Aguardando"}[k];
+        return `<div class="st ${k}"><span class="tag">${t}</span><div><b>${esc(s.name)}</b><div class="mut">${esc(s.desc)}</div></div></div>`; }).join("")
+    : none("Nenhum estágio cadastrado.");
+  const su = D.suit, tl = D.telemetry, b = tl.battery;
+  $("vSuit").innerHTML =
+    (su.img && okUrl(su.img) ? `<img src="${esc(su.img)}" alt="${esc(su.name) || "Traje operacional"}" style="width:100%;max-height:240px;object-fit:contain;background:#050c17;border:1px solid var(--l)">` : none("Sem foto do traje."))
+    + (su.name ? `<div class="neon" style="margin-top:6px;font-weight:bold">${esc(su.name)}</div>` : "") + (su.desc ? `<div class="mut">${esc(su.desc)}</div>` : "")
+    + `<div style="margin-top:12px;color:var(--c);font-size:13px">Samsung Galaxy A05s · bateria</div>`
+    + (b == null ? none("Sem leitura.") : `<div class="bar"><i style="width:${b}%;background:${b < 20 ? "var(--r)" : b < 50 ? "var(--y)" : ""}"></i></div><b class="${b < 20 ? "" : "neon"}">${b}%</b>`)
+    + `<div class="mut" style="margin-top:6px">Temperatura: <b style="color:#fff">${esc(tl.temp) || "—"}</b></div><div class="mut">Conexão: <b style="color:#fff">${esc(tl.status) || "—"}</b></div>`;
+  const P = D.playlist, t = P[D.currentTrack];
+  $("vPlayer").innerHTML = (t
+      ? `<div class="mut">Tocando agora</div><div class="neon" style="font-size:18px">♪ ${esc(t.title)}</div>` +
+        (okUrl(t.link) ? (/\.(mp3|ogg|wav|m4a|aac)(\?|$)/i.test(t.link) ? `<audio controls src="${esc(t.link)}" style="width:100%;margin-top:6px"></audio>` : "") + `<a class="btn g" href="${esc(t.link)}" target="_blank" rel="noopener">Abrir link da faixa</a>` : "")
+      : none("Nenhuma faixa em reprodução."))
+    + (P.length ? `<div style="margin-top:10px">` + P.map((m, i) => `<div class="trk ${i === D.currentTrack ? "on" : ""}">${i === D.currentTrack ? "▶" : "·"} ${esc(m.title)}</div>`).join("") + `</div>` : "");
+  tick();
+  if (role === "cmd") fill(force);
+}
+
+function tick() {
+  const n = new Date(), f = tz => n.toLocaleTimeString("pt-BR", {timeZone:tz, hour12:false});
+  $("clkR").textContent = f("America/Recife"); $("clkU").textContent = f("UTC");
+  if (!D.target) { $("vCd").innerHTML = `<small>T-MINUS</small>--:--:--:--`; return; }
+  let d = D.target - n.getTime(); const neg = d < 0; d = Math.abs(d);
+  const p = x => String(x).padStart(2, "0"), s = Math.floor(d / 1000);
+  $("vCd").innerHTML = `<small>${neg ? "T-PLUS" : "T-MINUS"} · DIAS : HORAS : MIN : SEG</small>${p(Math.floor(s / 86400))}:${p(Math.floor(s % 86400 / 3600))}:${p(Math.floor(s % 3600 / 60))}:${p(s % 60)}`;
+}
+setInterval(tick, 1000);
+
+/* ---------- Centro de Comando ---------- */
+const setV = (id, v, force) => { const e = $(id); if (force || document.activeElement !== e) e.value = v ?? ""; };
+function fill(force) {
+  setV("fT", D.title, force); setV("fS", D.subtitle, force);
+  setV("fSn", D.suit.name, force); setV("fSd", D.suit.desc, force); setV("fSu", pendImg ? "" : D.suit.img.startsWith("data:") ? "" : D.suit.img, force);
+  setV("fB", D.telemetry.battery, force); setV("fTe", D.telemetry.temp, force); setV("fSt", D.telemetry.status, force);
+  if (D.target) { const o = new Date(D.target - new Date(D.target).getTimezoneOffset() * 6e4); setV("fD", o.toISOString().slice(0, 16), force); } else setV("fD", "", force);
+  const fs = $("fStages");
+  if (force || !fs.children.length) {
+    fs.innerHTML = [0,1,2,3,4,5].map(i => `<label>Estágio ${i + 1}</label><input data-sn="${i}" maxlength="60" placeholder="Nome"><input data-sd="${i}" maxlength="140" placeholder="Descrição" style="margin-top:4px">`).join("");
+    const S = D.stages; fs.querySelectorAll("[data-sn]").forEach(e => e.value = S[e.dataset.sn]?.name ?? ""); fs.querySelectorAll("[data-sd]").forEach(e => e.value = S[e.dataset.sd]?.desc ?? "");
+  }
+  const S = stg(), c = $("fCur"); c.innerHTML = (S.length ? S : []).map((s, i) => `<option value="${i}">Em andamento: ${esc(s.name || "Estágio " + (i + 1))}</option>`).join("") + `<option value="${S.length}">${S.length ? "Todos concluídos" : "Sem estágios"}</option>`;
+  c.value = Math.min(D.currentStage || 0, S.length);
+  $("fList").innerHTML = D.playlist.length ? D.playlist.map((m, i) => `<div class="trk ${i === D.currentTrack ? "on" : ""}"><span style="flex:1">${esc(m.title)}</span><button class="btn" data-play="${i}" style="margin:0">▶ Tocar</button><button class="btn r" data-del="${i}" style="margin:0" aria-label="Remover ${esc(m.title)}">✕</button></div>`).join("") : none("Playlist vazia.");
+  const pv = $("fSp"), im = pendImg || D.suit.img; pv.style.display = im && okUrl(im) ? "block" : "none"; if (im) pv.src = im;
+}
+
+$("sMission").onclick = () => save({title:$("fT").value.trim(), subtitle:$("fS").value.trim()}, "Missão salva");
+$("sStages").onclick = () => {
+  const st = [...Array(6).keys()].map(i => ({name:document.querySelector(`[data-sn="${i}"]`).value.trim(), desc:document.querySelector(`[data-sd="${i}"]`).value.trim()})).filter(s => s.name || s.desc);
+  save({stages:st, currentStage:Math.min(D.currentStage || 0, st.length)}, "Estágios salvos");
+};
+$("fCur").onchange = () => save({currentStage:+$("fCur").value}, "Estágio atualizado");
+$("bNext").onclick = () => { const n = stg().length; if ((D.currentStage || 0) >= n) return toast("Todos os estágios já foram concluídos"); save({currentStage:(D.currentStage || 0) + 1}, "Estágio avançado"); };
+$("bPrev").onclick = () => { if ((D.currentStage || 0) <= 0) return toast("Já está no primeiro estágio"); save({currentStage:D.currentStage - 1}, "Estágio revertido"); };
+
+$("fSf").onchange = e => {
+  const f = e.target.files[0]; if (!f) return;
+  const r = new FileReader();
+  r.onload = () => { const im = new Image(); im.onload = () => {
+    const k = Math.min(1, 640 / Math.max(im.width, im.height)), c = document.createElement("canvas");
+    c.width = im.width * k; c.height = im.height * k; c.getContext("2d").drawImage(im, 0, 0, c.width, c.height);
+    pendImg = c.toDataURL("image/jpeg", .75); $("fSp").src = pendImg; $("fSp").style.display = "block"; }; im.src = r.result; };
+  r.readAsDataURL(f);
+};
+$("sSuit").onclick = async () => {
+  const url = $("fSu").value.trim(), img = pendImg || url || D.suit.img;
+  if (img && !okUrl(img)) return toast("A URL da foto deve começar com http(s)://");
+  await save({suit:{name:$("fSn").value.trim(), desc:$("fSd").value.trim(), img}}, "Traje salvo"); pendImg = null;
+};
+$("cSuit").onclick = async () => { pendImg = null; $("fSf").value = ""; await save({suit:{...D.suit, img:""}}, "Foto removida"); fill(true); };
+
+$("sDate").onclick = () => { const v = $("fD").value; if (!v) return toast("Escolha data e hora"); save({target:new Date(v).getTime()}, "Data alvo salva"); };
+$("cDate").onclick = () => save({target:0}, "Contagem limpa");
+
+$("sMusic").onclick = () => {
+  const title = $("fMt").value.trim(), link = $("fMl").value.trim();
+  if (!title) return toast("Informe o nome da música"); if (link && !okUrl(link)) return toast("O link deve começar com http(s)://");
+  save({playlist:[...D.playlist, {title, link}], currentTrack:D.currentTrack < 0 ? D.playlist.length : D.currentTrack}, "Música adicionada"); $("fMt").value = ""; $("fMl").value = "";
+};
+$("fList").onclick = e => {
+  const p = e.target.dataset.play, d = e.target.dataset.del;
+  if (p != null) save({currentTrack:+p}, "Faixa em reprodução");
+  if (d != null) { const i = +d, L = D.playlist.filter((_, j) => j !== i); let c = D.currentTrack; if (c === i) c = L.length ? Math.min(i, L.length - 1) : -1; else if (c > i) c--; save({playlist:L, currentTrack:c}, "Música removida"); }
+};
+
+$("sTele").onclick = () => {
+  const v = $("fB").value, b = v === "" ? null : Math.max(0, Math.min(100, Math.round(+v)));
+  save({telemetry:{battery:b, temp:$("fTe").value.trim(), status:$("fSt").value.trim()}}, "Telemetria salva");
+};
+$("sPass").onclick = async () => {
+  const v = $("fP").value.trim(); if (!/^\d{6}$/.test(v)) return toast("A senha precisa ter exatamente 6 dígitos");
+  await save({passcode:v}, "Senha atualizada"); $("fP").value = "";
+};
+
+/* ---------- Fundo de estrelas ---------- */
+const cv = $("stars"), cx = cv.getContext("2d"); let st = [];
+const sz = () => { cv.width = innerWidth; cv.height = innerHeight; st = Array.from({length:Math.min(160, innerWidth / 6)}, () => ({x:Math.random() * cv.width, y:Math.random() * cv.height, r:Math.random() * 1.4 + .3, p:Math.random() * 6})); };
+const draw = t => { cx.clearRect(0, 0, cv.width, cv.height); st.forEach(s => { cx.globalAlpha = .45 + .45 * Math.sin(t / 900 + s.p); cx.fillStyle = s.r > 1.2 ? "#4fd8ff" : "#fff"; cx.fillRect(s.x, s.y, s.r, s.r); }); if (!matchMedia("(prefers-reduced-motion:reduce)").matches) requestAnimationFrame(draw); };
+addEventListener("resize", sz); sz(); requestAnimationFrame(draw);
+render();
+</script>
+</body>
+</html>
